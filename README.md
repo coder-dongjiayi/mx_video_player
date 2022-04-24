@@ -17,7 +17,10 @@
 
 ```yaml
 dependencies:
-  flutter_bling_video_player: ^0.0.1
+  mx_video_player:
+    git:
+      ref: 0.0.1
+      url: https://github.com/coder-dongjiayi/mx_video_player
 ```
 
 ## 如何使用
