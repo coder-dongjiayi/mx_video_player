@@ -1,10 +1,10 @@
-#  flutter_bling_video_player
+#  mx_video_player
 
 基于Flutter官方的 [video_player](https://pub.flutter-io.cn/packages/video_player) 的二次封装
 
 ## 基本功能如下图
 
-<img src="https://github.com/coder-dongjiayi/flutter_bling_video_player/blob/main/images/base.gif?raw=true" alt="avatar"/>
+<img src="https://github.com/coder-dongjiayi/mx_video_player/blob/main/images/base.gif" alt="avatar"/>
 
 
 
@@ -28,7 +28,7 @@ dependencies:
 
 ```dart
   body: const Center(
-        child: BlingVideoPlayer.network("https://xxxxx.mp4")
+        child: MXVideoPlayer.network("https://xxxxx.mp4")
       ),
 ```
 
@@ -36,7 +36,7 @@ dependencies:
 
 ```dart
   body: const Center(
-        child: BlingVideoPlayer.file("/var/xxxx/xxx.mp4")
+        child: MXVideoPlayer.file("/var/xxxx/xxx.mp4")
       ),
 ```
 
@@ -44,23 +44,23 @@ dependencies:
 
 ```dart
   body: const Center(
-        child: BlingVideoPlayer.assets("assets/video/video1.mp4")
+        child: MXVideoPlayer.assets("assets/video/video1.mp4")
       ),
 ```
 
 以上方式初始化视频播放器，会自动根据视频尺寸比例显示播放器的大小，如下图所示
 
-<img src="https://github.com/coder-dongjiayi/flutter_bling_video_player/blob/main/images/IMG_0890.PNG?raw=true" alt="avatar" style="zoom:20%;" />
+<img src="https://github.com/coder-dongjiayi/mx_video_player/blob/main/images/IMG_0890.PNG" alt="avatar" style="zoom:20%;" />
 
 ### 2. 使用控制器初始化视频播放器
 
 ```dart
 
-  BlingVideoPlayerController? _videoPlayerController;
+  MXVideoPlayerController? _videoPlayerController;
   @override
   void initState() {
     super.initState();
-    _videoPlayerController = BlingVideoPlayerController();
+    _videoPlayerController = MXVideoPlayerController();
     String dataSource =  "assets://assets/video/video.mp4";
     /// 初始化网络视频 必须以http 或者 https开头 https://www.xxxx.mp4
     /// 初始化本地视频 必须以file:// 开头,比如 file://var/xxxx/video.mp4
@@ -71,7 +71,7 @@ dependencies:
   Widget build(BuildContext context) {
     return Scaffold(
       body:  Center(
-        child: BlingVideoPlayer(
+        child: MXVideoPlayer(
          controller: _videoPlayerController,
         )
       ),
@@ -80,7 +80,7 @@ dependencies:
   }
 ```
 
-对于视频文件的初始化也可以使用 ``` BlingVideoPlayerController```提供好的方法
+对于视频文件的初始化也可以使用 ``` MXVideoPlayerController```提供好的方法
 
 * 网络视频
 
@@ -116,7 +116,7 @@ dependencies:
 ### 3. 定制播放器
 
 ```dart
-         BlingVideoPlayer(
+         MXVideoPlayer(
                 controller: _videoPlayerController,
                 /// 视频初始化的操作是耗时的，可以使用这个builder 给用户一个加载中的提示
                 indicatorBuilder: (context, controller) {
