@@ -89,13 +89,16 @@ class _MXVideoAsyncFutureLoaderState
     _subscription = widget.onStream?.listen((event) {
       switch (event) {
         case MXVideoPlayerState.prepareInitialized:
-          _streamController.sink.add(MXVideoUIState.loading);
+          _addState(MXVideoUIState.loading);
+
           break;
         case MXVideoPlayerState.initialized:
-          _streamController.sink.add(MXVideoUIState.succeed);
+          _addState(MXVideoUIState.succeed);
+
           break;
         case MXVideoPlayerState.error:
-          _streamController.sink.add(MXVideoUIState.error);
+          _addState(MXVideoUIState.error);
+
           break;
         default:
           break;
@@ -103,6 +106,11 @@ class _MXVideoAsyncFutureLoaderState
     });
   }
 
+  void _addState(MXVideoUIState state){
+    Future.delayed(Duration.zero,(){
+      _streamController.sink.add(state);
+    });
+  }
   @override
   void dispose() {
     // TODO: implement dispose
@@ -124,7 +132,7 @@ class _MXVideoAsyncFutureLoaderState
     _isBufferingSubscription = null;
 
     _initSubscription();
-    _streamController.sink.add(MXVideoUIState.loading);
+   // _streamController.sink.add(MXVideoUIState.loading);
 
     super.didUpdateWidget(oldWidget);
   }

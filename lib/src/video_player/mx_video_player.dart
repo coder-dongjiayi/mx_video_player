@@ -233,9 +233,8 @@ class _BlingVideoPlayerState extends State<MXVideoPlayer> {
               return const SizedBox();
             }
             Size _applySize = _applyContent(constraints);
-            widget.initializedBuilder?.call(context, _controller!);
 
-            return Container(
+            Widget successWidget = Container(
               color: widget.color,
               width: _applySize.width,
               height: _applySize.height,
@@ -246,6 +245,8 @@ class _BlingVideoPlayerState extends State<MXVideoPlayer> {
                 ],
               ),
             );
+            widget.initializedBuilder?.call(context, _controller!);
+            return  successWidget;
           });
     });
   }

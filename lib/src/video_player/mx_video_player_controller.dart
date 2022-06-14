@@ -41,6 +41,7 @@ class MXVideoPlayerController {
   /// The current playing progress of the video
   double get progress => _progress;
 
+
   /// The current playing state op the video
   MXVideoPlayerState get state => _state;
 
@@ -221,6 +222,9 @@ class MXVideoPlayerController {
   }
 
   void _addListener() {
+    ///Get the total video duration when the video is successfully played
+    _duration ??= _videoPlayerController!.value.duration;
+
     _listener = () async {
       if (_videoPlayerController == null || _isRelease == true) return;
 
@@ -281,7 +285,8 @@ class MXVideoPlayerController {
             "isBuffering:$_isBuffering ,buffered:$_buffered,_position:$_position");
       }
 
-      _duration = _videoPlayerController!.value.duration;
+
+
       double progress = _position!.inMilliseconds / _duration!.inMilliseconds;
       progress = progress >= 1.0 ? 1.0 : progress;
 
@@ -302,17 +307,13 @@ class MXVideoPlayerController {
   }
 
   bool _isCompleted(double progress) {
-    if (_state == MXVideoPlayerState.completed) {
+    /// 循环播放的情况下 没有播放完成的状态
+    if (_state == MXVideoPlayerState.completed || isLooping == true) {
       return false;
     }
 
-    if (isLooping == false) {
-      return _position!.inMicroseconds == _duration!.inMicroseconds;
-    }
 
-    /// isLooping == true
-    /// The playback time returned by the system is always less than the total time
-    return progress > 0.99;
+    return _position!.inMicroseconds == _duration!.inMicroseconds;
   }
 
   Future<bool> _initialize() async {
