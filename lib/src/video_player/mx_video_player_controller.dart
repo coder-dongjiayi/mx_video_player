@@ -61,6 +61,9 @@ class MXVideoPlayerController {
   /// Android: exoplayer, ios:AVFoundation
   VideoPlayerController? get videoPlayerController => _videoPlayerController;
 
+  /// Get media Volume
+  double  get volume => _videoPlayerController?.value.volume ?? 0;
+
   /// Sets whether or not the video should loop after playing once.
   bool isLooping = false;
 
@@ -211,7 +214,7 @@ class MXVideoPlayerController {
     _videoPlayerController = _initVideoController(
         dataSource, mixWithOthers, package, closedCaptionFile);
 
-    _initialize();
+   await _initialize();
 
     MXLogger.info("parameters:\n"
         "[package = $package] \n"
@@ -223,7 +226,7 @@ class MXVideoPlayerController {
 
   void _addListener() {
     ///Get the total video duration when the video is successfully played
-    _duration ??= _videoPlayerController!.value.duration;
+    _duration = _videoPlayerController!.value.duration ;
 
     _listener = () async {
       if (_videoPlayerController == null || _isRelease == true) return;
@@ -243,12 +246,10 @@ class MXVideoPlayerController {
       if (_videoPlayerController!.value.isInitialized == false) {
         return;
       }
-      if (_state == MXVideoPlayerState.completed && isLooping == false) {
-        return;
-      }
+
 
       _position = _videoPlayerController!.value.position;
-      _positionController.sink.add(_position!);
+
 
       if (_videoPlayerController!.dataSourceType == DataSourceType.network) {
         int maxBuffering = 0;
@@ -261,23 +262,15 @@ class MXVideoPlayerController {
         _buffered = Duration(milliseconds: maxBuffering);
 
         _bufferedController.sink.add(_buffered ?? Duration.zero);
+        bool isBuffering =  (_buffered ?? Duration.zero) < _position! ? true : false;
 
-        bool isBuffering =
-            (_buffered ?? Duration.zero) < _position! ? true : false;
+        if(Platform.isAndroid){
+           isBuffering = _videoPlayerController!.value.isBuffering;
+         }
 
-        if (isBuffering != _isBuffering) {
+        if (isBuffering != _isBuffering && _state != MXVideoPlayerState.completed) {
           _isBuffering = isBuffering;
-
-          if (isBuffering == true) {
-            MXLogger.info("The video is buffering");
-            _videoPlayerController?.pause();
-          } else {
-            MXLogger.info("The video can be played when the buffer ends");
-            if(_verify(MXVideoPlayerState.playing) == false){
-              _videoPlayerController?.play();
-            }
-
-          }
+       
           _isBufferingController.sink.add(isBuffering);
         }
 
@@ -292,9 +285,14 @@ class MXVideoPlayerController {
 
       bool isCompleted = _isCompleted(progress);
 
-      _progress = progress;
 
-      _progressController.sink.add(progress);
+      _progress = progress;
+     if(_state != MXVideoPlayerState.paused){
+       _positionController.sink.add(_position!);
+       _progressController.sink.add(progress);
+     }
+
+
       MXLogger.detail("progress:"
           "$_progress position:${_position!},"
           "duration:${_duration!}");
@@ -339,7 +337,8 @@ class MXVideoPlayerController {
       return true;
     } catch (error) {
       MXLogger.error("Failed to initialize the player:${error.toString()}");
-      throw FlutterError(error.toString());
+      _updatePlayerState(MXVideoPlayerState.error);
+      return false;
     }
   }
 
@@ -410,8 +409,14 @@ class MXVideoPlayerController {
           "seekTo(Duration position) invalid ,current BlVideoPlayerState is:$_state");
       return Future.value();
     }
-
+    if(_state != MXVideoPlayerState.paused){
+      await _videoPlayerController?.pause();
+    }
     await _videoPlayerController?.seekTo(position);
+
+    if(_state != MXVideoPlayerState.paused){
+      await _videoPlayerController?.play();
+    }
   }
 
   Future<void> setProgress(double progress) async {
@@ -517,6 +522,7 @@ class MXVideoPlayerController {
 
   Future<void> _innerReset() async {
     _updatePlayerState(MXVideoPlayerState.idle);
+
     await _videoPlayerController?.dispose();
     if (_listener != null) {
       _videoPlayerController?.removeListener(_listener!);
@@ -524,6 +530,7 @@ class MXVideoPlayerController {
     _videoPlayerController = null;
     _listener = null;
   }
+
 
   void release() {
     if (_isRelease == true) return;
@@ -542,6 +549,7 @@ class MXVideoPlayerController {
     if (_positionController.isClosed == false) {
       _positionController.close();
     }
+
     if (_bufferedController.isClosed == false) {
       _bufferedController.close();
     }

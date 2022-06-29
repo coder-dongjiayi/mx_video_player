@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:mx_video_player/src/video_player/mx_video_player_controller.dart';
 export 'package:mx_video_player/src/video_player/mx_video_player_controller.dart';
 
-typedef PanelBuilder = Widget? Function(BuildContext context,
-    MXVideoPlayerController? controller, Size applySize);
 
 typedef BlingVideoBuilder = Widget? Function(
     BuildContext context, MXVideoPlayerController? controller);
@@ -28,7 +26,6 @@ abstract class BasicMXVideoPlayer extends StatefulWidget {
       this.color,
       this.alignment,
       this.fit,
-      this.panelBuilder,
       this.errorWidgetBuilder})
       : super(key: key);
 
@@ -62,8 +59,6 @@ abstract class BasicMXVideoPlayer extends StatefulWidget {
   /// Just like the properties of the [Image.fit], default value is  BoxFit.contain
   final BoxFit? fit;
 
-  /// You can customize the player style, such as pause, play, progress bar, etc
-  final PanelBuilder? panelBuilder;
 
   /// When playing an exception, you can customize the exception style using errorWidgetBuilder
   final AsyncErrorWidgetBuilder? errorWidgetBuilder;

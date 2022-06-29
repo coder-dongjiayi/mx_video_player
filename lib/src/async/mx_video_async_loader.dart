@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import 'package:flutter/cupertino.dart';
+import 'package:mx_video_player/src/video_player/mx_inner_widget.dart';
 
 import '../../mx_video_player.dart';
 
@@ -59,8 +60,9 @@ class _MXVideoAsyncFutureLoaderState
   StreamSubscription<MXVideoPlayerState>? _subscription;
 
   StreamSubscription<bool>? _isBufferingSubscription;
-  Widget? _cacheBuffering;
+
   List<Widget> _stack = [];
+
   @override
   void initState() {
     // TODO: implement initState
@@ -71,16 +73,17 @@ class _MXVideoAsyncFutureLoaderState
 
   void _initSubscription() {
     if (widget.onStream == null) {
-      Future.delayed(Duration.zero, () {
-        _streamController.sink.add(MXVideoUIState.none);
-      });
+      _addState(MXVideoUIState.none);
+
       return;
     }
     _isBufferingSubscription = widget.onIsBufferingStream?.listen((event) {
+      
       if(event == true){
-         _streamController.sink.add(MXVideoUIState.startBuffering);
+        _addState(MXVideoUIState.startBuffering);
+
       }else{
-        _streamController.sink.add(MXVideoUIState.endBuffering);
+        _addState(MXVideoUIState.endBuffering);
 
       }
 
@@ -93,8 +96,11 @@ class _MXVideoAsyncFutureLoaderState
 
           break;
         case MXVideoPlayerState.initialized:
-          _addState(MXVideoUIState.succeed);
 
+          _addState(MXVideoUIState.succeed);
+          break;
+        case   MXVideoPlayerState.completed:
+          _addState(MXVideoUIState.succeed);
           break;
         case MXVideoPlayerState.error:
           _addState(MXVideoUIState.error);
@@ -107,6 +113,7 @@ class _MXVideoAsyncFutureLoaderState
   }
 
   void _addState(MXVideoUIState state){
+
     Future.delayed(Duration.zero,(){
       _streamController.sink.add(state);
     });
@@ -132,7 +139,7 @@ class _MXVideoAsyncFutureLoaderState
     _isBufferingSubscription = null;
 
     _initSubscription();
-   // _streamController.sink.add(MXVideoUIState.loading);
+
 
     super.didUpdateWidget(oldWidget);
   }
@@ -165,15 +172,23 @@ class _MXVideoAsyncFutureLoaderState
           if(snapshot.data == MXVideoUIState.startBuffering){
 
              Widget? buffering = widget.bufferedBuilder?.call(context);
-             _cacheBuffering = buffering;
-            if(buffering != null){
+
+            if(buffering != null &&  _contain(runtimeType: MXInnerBuffer) == false){
 
               _stack.add(buffering);
+
             }
           }
           if(snapshot.data == MXVideoUIState.endBuffering){
-            _stack.remove(_cacheBuffering);
+
+            _stack.removeWhere((element) => element.runtimeType == MXInnerBuffer);
+            /// 此时如果视频播放器不存在 stack中 就需要添加视频播放的widget
+            if(!_contain(runtimeType: MXInnerSuccess)){
+              _stack.add(_buildDone(snapshot));
+            }
           }
+
+
           MXLogger.info("MXVideoUIState:${snapshot.data}, stack:${_stack.toString()}");
           return Stack(
             alignment: Alignment.center,
@@ -182,6 +197,12 @@ class _MXVideoAsyncFutureLoaderState
         });
   }
 
+  bool _contain({required Type runtimeType}){
+    for (var element in _stack) {
+      if(element.runtimeType == runtimeType) return true;
+    }
+    return false;
+  }
   Widget _buildPlaceholder(
       BuildContext context, AsyncSnapshot<MXVideoUIState?> snapshot) {
     Widget? _placeholderWidget = widget.placeholderBuilder?.call(context);

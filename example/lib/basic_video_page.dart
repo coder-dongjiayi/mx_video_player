@@ -44,7 +44,7 @@ class _BasicVideoPageState extends State<BasicVideoPage> {
 
   double _volume = 0.3;
 
-  String url = "http://vfx.mtime.cn/Video/2019/02/04/mp4/190204084208765161.mp4";
+  String url = "https://1254467417.vod2.myqcloud.com/139d0463vodbj1254467417/963069588602268010636208027/f0.mp4";
   @override
   void initState() {
     // TODO: implement initState
@@ -107,12 +107,7 @@ class _BasicVideoPageState extends State<BasicVideoPage> {
             errorWidgetBuilder: (context, error, controller) {
               return Text("视频播放失败了 ${error.toString()}");
             },
-            /// 用于定制显示视频播放器的样式，比如播放按钮，进度条等等
-            panelBuilder: (context, player, size) {
-              return player == null
-                  ? const SizedBox()
-                  : VideoPlayPanel(playerController: player);
-            },
+
           ),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,

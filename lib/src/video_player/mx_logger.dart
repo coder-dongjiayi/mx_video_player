@@ -16,14 +16,14 @@ class MXLogger {
   static void log(MXLogLevel level, String message) {
     if (level.getLevel() <= logLevel.getLevel()){
       if(level == MXLogLevel.detail){
-        developer.log(message, name: 'mx_video_player');
+        developer.log(message, name: 'mx_video_player:detail');
       }
       if(level == MXLogLevel.error){
-        developer.log(message, name: 'mx_video_player');
+        developer.log(message, name: 'mx_video_player:error');
 
       }
       if(level == MXLogLevel.info){
-        developer.log(message, name: 'mx_video_player');
+        developer.log(message, name: 'mx_video_player:info');
       }
     }
 
