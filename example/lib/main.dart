@@ -1,14 +1,13 @@
-import 'package:example/convenient_video_page.dart';
 
-
+import 'package:example/video_test_page.dart';
 import 'package:flutter/material.dart';
 
-import 'basic_video_page.dart';
+
 import 'package:super_player/super_player.dart';
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
- await SuperPlayerPlugin.setGlobalLicense("https://license.vod2.myqcloud.com/license/v2/1254467417_1/v_cube.license", "660cc4a42331e86c015db1a10080a33b");
+ await SuperPlayerPlugin.setGlobalLicense("腾讯的授权XXXXX.license", "xxxxxxxx");
   SuperPlayerPlugin.setLogLevel(6);
  runApp(const MyApp());
 }
@@ -41,71 +40,31 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
+
     return Scaffold(
       appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
+
         title: Text(widget.title),
       ),
       body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
+
         child: Column(
 
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            // ElevatedButton(onPressed: (){
-            //   Navigator.of(context).push(MaterialPageRoute(builder: (context){
-            //     return BestExamplePage();
-            //   }));
-            //
-            // }, child: const Text("最佳实战")),
-
             ElevatedButton(onPressed: (){
               Navigator.of(context).push(MaterialPageRoute(builder: (context){
-                return const BasicVideoPage();
+                return VideoTestPage();
               }));
-
-            }, child: const Text("基本功能")),
-
-            ElevatedButton(onPressed: (){
-              Navigator.of(context).push(MaterialPageRoute(builder: (context){
-                return  ConvenientVideoPage();
-              }));
-
-            }, child: const Text("便捷初始化视频")),
-
-
+            }, child: const Text("最佳实战")),
 
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+
     );
   }
 }

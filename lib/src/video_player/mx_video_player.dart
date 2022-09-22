@@ -42,6 +42,7 @@ class MXVideoPlayer extends BasicMXVideoPlayer {
             errorWidgetBuilder: errorWidgetBuilder,
             initializedBuilder: initializedBuilder);
 
+  /// 腾讯的视频播放器暂不支持本地视频播放
   const MXVideoPlayer.assets(String dataSource,
       {Key? key,
       bool? mixWithOthers,
@@ -74,7 +75,7 @@ class MXVideoPlayer extends BasicMXVideoPlayer {
           errorWidgetBuilder: errorWidgetBuilder,
           initializedBuilder: initializedBuilder,
         );
-
+  /// 腾讯的视频播放器暂不支持本地视频播放
   const MXVideoPlayer.file(String dataSource,
       {Key? key,
       bool? mixWithOthers,

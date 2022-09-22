@@ -32,8 +32,16 @@ dependencies:
 
   mx_video_player:
     path: ../
+
+  net_speed_plugin:
+    path: ./plugin/flutter_net_speed_plugin
   provider: ^6.0.2
+  shared_preferences: 2.0.15
+  volume_controller: ^2.0.4
   path_provider: ^2.0.1
+  fluttertoast: ^8.0.9
+  auto_orientation: ^2.2.1
+  crypto: ^3.0.2
   dio: ^4.0.4
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.

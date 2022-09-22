@@ -1,36 +1,70 @@
 PODS:
+  - auto_orientation (0.0.1):
+    - Flutter
   - Flutter (1.0.0)
+  - fluttertoast (0.0.2):
+    - Flutter
+    - Toast
+  - net_speed_plugin (0.0.1):
+    - Flutter
   - path_provider_ios (0.0.1):
+    - Flutter
+  - shared_preferences_ios (0.0.1):
     - Flutter
   - super_player (1.0.2):
     - Flutter
     - TXLiteAVSDK_Professional (= 10.2.11418)
+  - Toast (4.0.0)
   - TXLiteAVSDK_Professional (10.2.11418):
     - TXLiteAVSDK_Professional/Professional (= 10.2.11418)
   - TXLiteAVSDK_Professional/Professional (10.2.11418)
+  - volume_controller (0.0.1):
+    - Flutter
 
 DEPENDENCIES:
+  - auto_orientation (from `.symlinks/plugins/auto_orientation/ios`)
   - Flutter (from `Flutter`)
+  - fluttertoast (from `.symlinks/plugins/fluttertoast/ios`)
+  - net_speed_plugin (from `.symlinks/plugins/net_speed_plugin/ios`)
   - path_provider_ios (from `.symlinks/plugins/path_provider_ios/ios`)
+  - shared_preferences_ios (from `.symlinks/plugins/shared_preferences_ios/ios`)
   - super_player (from `.symlinks/plugins/super_player/ios`)
+  - volume_controller (from `.symlinks/plugins/volume_controller/ios`)
 
 SPEC REPOS:
   trunk:
+    - Toast
     - TXLiteAVSDK_Professional
 
 EXTERNAL SOURCES:
+  auto_orientation:
+    :path: ".symlinks/plugins/auto_orientation/ios"
   Flutter:
     :path: Flutter
+  fluttertoast:
+    :path: ".symlinks/plugins/fluttertoast/ios"
+  net_speed_plugin:
+    :path: ".symlinks/plugins/net_speed_plugin/ios"
   path_provider_ios:
     :path: ".symlinks/plugins/path_provider_ios/ios"
+  shared_preferences_ios:
+    :path: ".symlinks/plugins/shared_preferences_ios/ios"
   super_player:
     :path: ".symlinks/plugins/super_player/ios"
+  volume_controller:
+    :path: ".symlinks/plugins/volume_controller/ios"
 
 SPEC CHECKSUMS:
+  auto_orientation: 2941c44ebe5c3d41016001597ab03e81a92a26ce
   Flutter: 50d75fe2f02b26cc09d224853bb45737f8b3214a
+  fluttertoast: 16fbe6039d06a763f3533670197d01fc73459037
+  net_speed_plugin: e9e18cecbaaf22ccc6977fe56a315ab80cb87425
   path_provider_ios: 14f3d2fd28c4fdb42f44e0f751d12861c43cee02
+  shared_preferences_ios: 548a61f8053b9b8a49ac19c1ffbc8b92c50d68ad
   super_player: e411627a839fbb676f939c7b359836bedaf207df
+  Toast: 91b396c56ee72a5790816f40d3a94dd357abc196
   TXLiteAVSDK_Professional: f250a7239440ef1073b91f32526ff2a60517ee61
+  volume_controller: 531ddf792994285c9b17f9d8a7e4dcdd29b3eae9
 
 PODFILE CHECKSUM: 02d221f1e7d9462bff20092f7b45d080159f4852
 
