@@ -6,7 +6,13 @@
 
 <img src="https://github.com/coder-dongjiayi/mx_video_player/blob/main/images/base.gif" alt="avatar"/>
 
+# 基于腾讯超级播放器的封装
 
+
+
+* ``` tengxun``` 这个分支的代码是基于腾讯超级播放器的封装，因为腾讯的播放器在弱网下表现良好尤其是在iOS端，如果业务对视频要求非常高，ios端系统的播放器可能就不会很好的满足需求。如下所示 弱网表现良好
+
+  <video src="/Users/dongjiayi/Documents/github/mx_video_player/RPReplay_Final1663828952.MP4"></video>
 
 ## 为什么要二次封装 video_player
 
