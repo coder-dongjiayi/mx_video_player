@@ -46,7 +46,7 @@ class MXVideoPlayerController {
   MXVideoPlayerState get state => _state;
 
   /// The value is true when buffer duration < position duration
-  bool get isBuffering => _isBuffering;
+  bool get isBuffering => _isBuffering ?? false;
 
   /// The video aspect
   double get aspectRatio => _videoPlayerController == null
@@ -111,7 +111,7 @@ class MXVideoPlayerController {
 
   Duration? _buffered;
 
-  bool _isBuffering = false;
+  bool? _isBuffering;
 
   double _progress = 0.0;
 
@@ -258,12 +258,13 @@ class MXVideoPlayerController {
           if (end > maxBuffering) {
             maxBuffering = end;
           }
+     
         }
         _buffered = Duration(milliseconds: maxBuffering);
 
         _bufferedController.sink.add(_buffered ?? Duration.zero);
         bool isBuffering =  (_buffered ?? Duration.zero) < _position! ? true : false;
-
+       
         if(Platform.isAndroid){
            isBuffering = _videoPlayerController!.value.isBuffering;
          }
@@ -297,7 +298,7 @@ class MXVideoPlayerController {
           "$_progress position:${_position!},"
           "duration:${_duration!}");
 
-      if (isCompleted) {
+      if (isCompleted && _state != MXVideoPlayerState.completed) {
         _updatePlayerState(MXVideoPlayerState.completed);
       }
     };
@@ -322,15 +323,17 @@ class MXVideoPlayerController {
 
     if (autoPlay == true && _result == true) {
       MXLogger.info("autoPlay = true Start auto play");
-      play();
+
+      await  play();
     }
-    _videoPlayerController?.setLooping(isLooping);
+    await _videoPlayerController?.setLooping(isLooping);
     return _result;
   }
 
   Future<bool> _innerInitialize() async {
     try {
       await _videoPlayerController?.initialize();
+
       _updatePlayerState(MXVideoPlayerState.initialized);
       MXLogger.info(
           "The player is successfully initialized. videoSize = $size");

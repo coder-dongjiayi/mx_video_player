@@ -44,12 +44,14 @@ class _BasicVideoPageState extends State<BasicVideoPage> {
 
   double _volume = 0.3;
 
-  String url = "https://1254467417.vod2.myqcloud.com/139d0463vodbj1254467417/963069588602268010636208027/f0.mp4";
+  String url = "https://1254467417.vod2.myqcloud.com/ea86f20bvodtransbj1254467417/baa2218a387702302020859391/v.f32849.m3u8";
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
     _videoPlayerController = MXVideoPlayerController();
+    _videoPlayerController.setDataSource(url, isLooping: true,autoPlay: true);
+
     _videoPlayerController.onIsBufferingStream.listen((event) {});
     MXLogger.changeLogLevel(MXLogLevel.info);
   }
@@ -70,7 +72,7 @@ class _BasicVideoPageState extends State<BasicVideoPage> {
         alignment: Alignment.bottomCenter,
         child: ElevatedButton(
             onPressed: () {
-              _videoPlayerController.setDataSource(url, isLooping: true);
+
             },
             child: const Text("默认占位的widget 点击播放视频")),
       ),
@@ -84,6 +86,8 @@ class _BasicVideoPageState extends State<BasicVideoPage> {
       body: Column(
         children: [
           MXVideoPlayer(
+            width: MediaQuery.of(context).size.width,
+            height: 300,
             controller: _videoPlayerController,
             /// 视频加载指示器
             indicatorBuilder: (context, controller) {
@@ -99,10 +103,10 @@ class _BasicVideoPageState extends State<BasicVideoPage> {
                 child: const Text("正在缓冲中"),
               );
             },
-            /// 视频还没有初始化之前用于占位的builder
-            placeholderBuilder: (context, controller) {
-              return _placeholder();
-            },
+            // /// 视频还没有初始化之前用于占位的builder
+            // placeholderBuilder: (context, controller) {
+            //   return _placeholder();
+            // },
             /// 视频加载失败或者播放过程中出现了error
             errorWidgetBuilder: (context, error, controller) {
               return Text("视频播放失败了 ${error.toString()}");

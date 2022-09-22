@@ -250,6 +250,7 @@ class _BlingVideoPlayerState extends State<MXVideoPlayer> {
 
 
   Widget _buildPlayer(Size size) {
+    if(_controller?.videoPlayerController == null) return const SizedBox();
     return ClipRect(
       child: OverflowBox(
         maxWidth: size.width,
