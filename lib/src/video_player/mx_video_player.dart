@@ -1,6 +1,8 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:mx_video_player/src/video_player/mx_inner_widget.dart';
-import 'package:video_player/video_player.dart';
+import 'package:super_player/super_player.dart';
 import 'package:mx_video_player/src/async/mx_video_async_loader.dart';
 import 'package:mx_video_player/src/video_player/basic_mx_video_player.dart';
 
@@ -20,14 +22,12 @@ class MXVideoPlayer extends BasicMXVideoPlayer {
       BlingVideoBuilder? placeholderBuilder,
       BlingVideoBuilder? bufferBuilder,
       Color? color,
-
       AsyncErrorWidgetBuilder? errorWidgetBuilder,
       InitializedBuilder? initializedBuilder,
       bool? delayInit})
       : _dataSource = null,
         _mixWithOthers = null,
         _package = null,
-        _closedCaptionFile = null,
         _isLooping = null,
         super(controller,
             key: key,
@@ -39,7 +39,6 @@ class MXVideoPlayer extends BasicMXVideoPlayer {
             placeholderBuilder: placeholderBuilder,
             bufferBuilder: bufferBuilder,
             color: color,
-
             errorWidgetBuilder: errorWidgetBuilder,
             initializedBuilder: initializedBuilder);
 
@@ -47,43 +46,6 @@ class MXVideoPlayer extends BasicMXVideoPlayer {
       {Key? key,
       bool? mixWithOthers,
       String? package,
-      Future<ClosedCaptionFile>? closedCaptionFile,
-      bool? isLooping,
-      double? width,
-      double? height,
-      Alignment? alignment,
-      BoxFit? fit,
-      BlingVideoBuilder? indicatorBuilder,
-      BlingVideoBuilder? placeholderBuilder,
-        Color? color,
-      AsyncErrorWidgetBuilder? errorWidgetBuilder,
-      InitializedBuilder? initializedBuilder,
-      bool? delayInit})
-      : _dataSource = "assets://" + dataSource,
-        _mixWithOthers = mixWithOthers,
-        _package = package,
-        _closedCaptionFile = closedCaptionFile,
-        _isLooping = isLooping,
-        super(
-          null,
-          key: key,
-          width: width,
-          height: height,
-          alignment: alignment,
-          fit: fit,
-          indicatorBuilder: indicatorBuilder,
-          placeholderBuilder: placeholderBuilder,
-          color: color,
-
-          errorWidgetBuilder: errorWidgetBuilder,
-          initializedBuilder: initializedBuilder,
-        );
-
-  const MXVideoPlayer.file(String dataSource,
-      {Key? key,
-      bool? mixWithOthers,
-      String? package,
-      Future<ClosedCaptionFile>? closedCaptionFile,
       bool? isLooping,
       double? width,
       double? height,
@@ -92,14 +54,12 @@ class MXVideoPlayer extends BasicMXVideoPlayer {
       BlingVideoBuilder? indicatorBuilder,
       BlingVideoBuilder? placeholderBuilder,
       Color? color,
-
       AsyncErrorWidgetBuilder? errorWidgetBuilder,
       InitializedBuilder? initializedBuilder,
       bool? delayInit})
-      : _dataSource = "file://" + dataSource,
+      : _dataSource = "assets://" + dataSource,
         _mixWithOthers = mixWithOthers,
         _package = package,
-        _closedCaptionFile = closedCaptionFile,
         _isLooping = isLooping,
         super(
           null,
@@ -111,7 +71,39 @@ class MXVideoPlayer extends BasicMXVideoPlayer {
           indicatorBuilder: indicatorBuilder,
           placeholderBuilder: placeholderBuilder,
           color: color,
+          errorWidgetBuilder: errorWidgetBuilder,
+          initializedBuilder: initializedBuilder,
+        );
 
+  const MXVideoPlayer.file(String dataSource,
+      {Key? key,
+      bool? mixWithOthers,
+      String? package,
+      bool? isLooping,
+      double? width,
+      double? height,
+      Alignment? alignment,
+      BoxFit? fit,
+      BlingVideoBuilder? indicatorBuilder,
+      BlingVideoBuilder? placeholderBuilder,
+      Color? color,
+      AsyncErrorWidgetBuilder? errorWidgetBuilder,
+      InitializedBuilder? initializedBuilder,
+      bool? delayInit})
+      : _dataSource = "file://" + dataSource,
+        _mixWithOthers = mixWithOthers,
+        _package = package,
+        _isLooping = isLooping,
+        super(
+          null,
+          key: key,
+          width: width,
+          height: height,
+          alignment: alignment,
+          fit: fit,
+          indicatorBuilder: indicatorBuilder,
+          placeholderBuilder: placeholderBuilder,
+          color: color,
           errorWidgetBuilder: errorWidgetBuilder,
           initializedBuilder: initializedBuilder,
         );
@@ -120,7 +112,6 @@ class MXVideoPlayer extends BasicMXVideoPlayer {
       {Key? key,
       bool? mixWithOthers,
       String? package,
-      Future<ClosedCaptionFile>? closedCaptionFile,
       bool? isLooping,
       double? width,
       double? height,
@@ -128,16 +119,14 @@ class MXVideoPlayer extends BasicMXVideoPlayer {
       BoxFit? fit,
       BlingVideoBuilder? indicatorBuilder,
       BlingVideoBuilder? placeholderBuilder,
-        BlingVideoBuilder? bufferBuilder,
-        Color? color,
-
+      BlingVideoBuilder? bufferBuilder,
+      Color? color,
       AsyncErrorWidgetBuilder? errorWidgetBuilder,
       InitializedBuilder? initializedBuilder,
       bool? delayInit})
       : _dataSource = dataSource,
         _mixWithOthers = mixWithOthers,
         _package = package,
-        _closedCaptionFile = closedCaptionFile,
         _isLooping = isLooping,
         super(
           null,
@@ -150,7 +139,6 @@ class MXVideoPlayer extends BasicMXVideoPlayer {
           placeholderBuilder: placeholderBuilder,
           bufferBuilder: bufferBuilder,
           color: color,
-
           errorWidgetBuilder: errorWidgetBuilder,
           initializedBuilder: initializedBuilder,
         );
@@ -158,7 +146,7 @@ class MXVideoPlayer extends BasicMXVideoPlayer {
   final String? _dataSource;
   final bool? _mixWithOthers;
   final String? _package;
-  final Future<ClosedCaptionFile>? _closedCaptionFile;
+
   final bool? _isLooping;
 
   @override
@@ -171,6 +159,7 @@ class _BlingVideoPlayerState extends State<MXVideoPlayer> {
   @override
   void initState() {
     super.initState();
+    SuperPlayerPlugin.setLogLevel(6);
     if (widget._dataSource != null) {
       _controller = MXVideoPlayerController(
           dataSource: widget._dataSource,
@@ -178,7 +167,6 @@ class _BlingVideoPlayerState extends State<MXVideoPlayer> {
           isLooping: widget._isLooping ?? false,
           autoPlay: true,
           mixWithOthers: widget._mixWithOthers,
-          closedCaptionFile: widget._closedCaptionFile,
           alignment: widget.alignment,
           fit: widget.fit);
     } else {
@@ -208,16 +196,23 @@ class _BlingVideoPlayerState extends State<MXVideoPlayer> {
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (context, constraints) {
       return MXVideoAsyncFutureLoader(
+          playerStack: _controller?.playerStack,
+          stackCacheCallback: (List<Widget> stack) {
+            _controller?.updatePlayerStack(stack);
+          },
           onStream: _controller?.onPlayerStateChanged,
           onIsBufferingStream: _controller?.onIsBufferingStream,
           indicatorBuilder: (BuildContext context) {
-            return widget.indicatorBuilder?.call(context, _controller);
+            Widget? _indicator =
+            widget.indicatorBuilder?.call(context, _controller);
+
+            return _indicator == null
+                ? null
+                : MXInnerBuffer(child: _indicator);
           },
           errorWidgetBuilder: (BuildContext context) {
-            Widget? errorWidget = widget.errorWidgetBuilder?.call(
-                context,
-                _controller?.videoPlayerController?.value.errorDescription,
-                _controller);
+            Widget? errorWidget = widget.errorWidgetBuilder
+                ?.call(context, "视频播放失败", _controller);
 
             return errorWidget;
           },
@@ -226,7 +221,8 @@ class _BlingVideoPlayerState extends State<MXVideoPlayer> {
                 (widget.placeholderBuilder?.call(context, _controller));
           },
           bufferedBuilder: (BuildContext context) {
-            Widget? _buffer =  widget.bufferBuilder?.call(context,_controller);
+            Widget? _buffer =
+            widget.bufferBuilder?.call(context, _controller);
 
             return _buffer == null ? null : MXInnerBuffer(child: _buffer);
           },
@@ -236,33 +232,42 @@ class _BlingVideoPlayerState extends State<MXVideoPlayer> {
             }
             Size _applySize = _applyContent(constraints);
 
-            Widget successWidget = Container(
-              color: widget.color,
-              width: _applySize.width,
-              height: _applySize.height,
-              child:  _buildPlayer(_applySize)
-            );
+
+            Widget successWidget = OrientationBuilder(builder: (context,orientation){
+              double width = orientation == Orientation.landscape
+                  ? max(_applySize.width, _applySize.height)
+                  : min(_applySize.width, _applySize.height);
+              double height = orientation == Orientation.landscape
+                  ? min(_applySize.width, _applySize.height)
+                  : max(_applySize.width, _applySize.height);
+              return Container(
+                  color: widget.color,
+                  width: width,
+                  height: height,
+                  child: _buildPlayer(Size(width,height)));
+            });
             widget.initializedBuilder?.call(context, _controller!);
-            return  MXInnerSuccess(child: successWidget);
+            return MXInnerSuccess(child: successWidget);
           });
     });
   }
 
-
   Widget _buildPlayer(Size size) {
-    if(_controller?.videoPlayerController == null) return const SizedBox();
+    if (_controller?.videoPlayerController == null || size.width == 0) return const SizedBox();
+
+
     return ClipRect(
-      child: OverflowBox(
+      child: LimitedBox(
         maxWidth: size.width,
         maxHeight: size.height,
-        alignment: _controller?.alignment ?? Alignment.center,
         child: FittedBox(
           fit: _controller?.fit ?? (widget.fit ?? BoxFit.contain),
           alignment: widget.alignment ?? Alignment.center,
           child: SizedBox(
             width: _controller?.size.width,
             height: _controller?.size.height,
-            child: VideoPlayer(_controller!.videoPlayerController!),
+            child:
+                TXPlayerVideo(controller: _controller!.videoPlayerController!),
           ),
         ),
       ),

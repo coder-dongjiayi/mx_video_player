@@ -10,7 +10,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  video_player: 2.4.5
+  super_player:
+    git:
+      url: http://gs.blingabc.com/flutter/flutter_tengxxun_player.git
 
 dev_dependencies:
   flutter_test:

@@ -3,7 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:mx_video_player/mx_video_player.dart';
 import 'package:provider/provider.dart';
-
+import 'package:super_player/super_player.dart';
 class BasicVideoState extends ChangeNotifier {
   late MXVideoPlayerController playerController;
   double _progress = 0.0;
@@ -41,7 +41,7 @@ class BasicVideoPage extends StatefulWidget {
 
 class _BasicVideoPageState extends State<BasicVideoPage> {
   late MXVideoPlayerController _videoPlayerController;
-
+  late TXVodPlayerController _controller;
   double _volume = 0.3;
 
   String url = "https://1254467417.vod2.myqcloud.com/ea86f20bvodtransbj1254467417/baa2218a387702302020859391/v.f32849.m3u8";
@@ -49,10 +49,16 @@ class _BasicVideoPageState extends State<BasicVideoPage> {
   void initState() {
     // TODO: implement initState
     super.initState();
+    // _controller = TXVodPlayerController();
+    //  _controller.initialize();
+    //
+    //
+    // _controller.setConfig(FTXVodPlayConfig());
+    //  _controller.startPlay(url);
+
     _videoPlayerController = MXVideoPlayerController();
     _videoPlayerController.setDataSource(url, isLooping: true,autoPlay: true);
-
-    _videoPlayerController.onIsBufferingStream.listen((event) {});
+    
     MXLogger.changeLogLevel(MXLogLevel.info);
   }
 
@@ -83,6 +89,7 @@ class _BasicVideoPageState extends State<BasicVideoPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text("基本功能演示")),
+
       body: Column(
         children: [
           MXVideoPlayer(

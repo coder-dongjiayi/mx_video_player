@@ -11,6 +11,8 @@ enum MXVideoPlayerState {
   /// 正在播放中
   playing,
 
+  /// 缓冲中
+  buffering,
   /// 暂停
   paused,
 

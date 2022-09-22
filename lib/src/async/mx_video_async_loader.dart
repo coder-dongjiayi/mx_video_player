@@ -21,9 +21,9 @@ enum MXVideoUIState {
 
 typedef ResultWidgetBuilder = Widget? Function(BuildContext context);
 
-
 typedef AsyncLoaderWidgetBuilder = Widget? Function(BuildContext context);
 
+typedef StackCacheCallback = void Function(List<Widget> stack);
 class MXVideoAsyncFutureLoader extends StatefulWidget {
   const MXVideoAsyncFutureLoader(
       {Key? key,
@@ -33,7 +33,8 @@ class MXVideoAsyncFutureLoader extends StatefulWidget {
       this.bufferedBuilder,
       this.placeholderBuilder,
       this.errorWidgetBuilder,
-      this.indicatorBuilder})
+      this.indicatorBuilder,
+      this.playerStack, this.stackCacheCallback})
       : super(key: key);
 
   final Stream<MXVideoPlayerState>? onStream;
@@ -43,16 +44,16 @@ class MXVideoAsyncFutureLoader extends StatefulWidget {
   final AsyncLoaderWidgetBuilder? bufferedBuilder;
 
   final ResultWidgetBuilder successWidgetBuilder;
-
+  final StackCacheCallback? stackCacheCallback;
   final ResultWidgetBuilder? errorWidgetBuilder;
   final AsyncLoaderWidgetBuilder? indicatorBuilder;
+  final List<Widget>? playerStack;
   @override
   _MXVideoAsyncFutureLoaderState createState() =>
       _MXVideoAsyncFutureLoaderState();
 }
 
-class _MXVideoAsyncFutureLoaderState
-    extends State<MXVideoAsyncFutureLoader> {
+class _MXVideoAsyncFutureLoaderState extends State<MXVideoAsyncFutureLoader> {
   Widget? _cachePlaceholder;
 
   final StreamController<MXVideoUIState> _streamController =
@@ -62,13 +63,14 @@ class _MXVideoAsyncFutureLoaderState
   StreamSubscription<bool>? _isBufferingSubscription;
 
   List<Widget> _stack = [];
-
+  bool _initialized = false;
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
-
+    _stack = widget.playerStack ?? [];
     _initSubscription();
+
   }
 
   void _initSubscription() {
@@ -78,15 +80,11 @@ class _MXVideoAsyncFutureLoaderState
       return;
     }
     _isBufferingSubscription = widget.onIsBufferingStream?.listen((event) {
-      
-      if(event == true){
+      if (event == true) {
         _addState(MXVideoUIState.startBuffering);
-
-      }else{
+      } else {
         _addState(MXVideoUIState.endBuffering);
-
       }
-
     });
 
     _subscription = widget.onStream?.listen((event) {
@@ -96,10 +94,10 @@ class _MXVideoAsyncFutureLoaderState
 
           break;
         case MXVideoPlayerState.initialized:
-
+          _initialized = true;
           _addState(MXVideoUIState.succeed);
           break;
-        case   MXVideoPlayerState.completed:
+        case MXVideoPlayerState.completed:
           _addState(MXVideoUIState.succeed);
           break;
         case MXVideoPlayerState.error:
@@ -112,12 +110,12 @@ class _MXVideoAsyncFutureLoaderState
     });
   }
 
-  void _addState(MXVideoUIState state){
-
-    Future.delayed(Duration.zero,(){
+  void _addState(MXVideoUIState state) {
+    Future.delayed(Duration.zero, () {
       _streamController.sink.add(state);
     });
   }
+
   @override
   void dispose() {
     // TODO: implement dispose
@@ -140,25 +138,43 @@ class _MXVideoAsyncFutureLoaderState
 
     _initSubscription();
 
-
     super.didUpdateWidget(oldWidget);
   }
 
+  void updateStack(AsyncSnapshot<MXVideoUIState?> snapshot){
+   int index =  _stack.indexWhere((element){
+      return element.runtimeType == MXInnerSuccess;
+    });
+   if(index >= 0){
+     _stack[index] = _buildDone(snapshot);
+   }
+
+   MXLogger.info(
+       "Reset MXVideoUIState:${snapshot.data}, stack:${_stack.toString()}");
+  }
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<MXVideoUIState?>(
         stream: _streamController.stream,
         builder:
             (BuildContext context, AsyncSnapshot<MXVideoUIState?> snapshot) {
+          if(snapshot.data == null && _stack.isNotEmpty){
 
+             updateStack(snapshot);
+            return Stack(
+              alignment: Alignment.center,
+              children: _stack,
+            );
+          }
           if (snapshot.data == MXVideoUIState.error) {
             return _buildError();
           }
-          if (snapshot.data == MXVideoUIState.none || snapshot.data == null) {
+          if (snapshot.data == MXVideoUIState.none ) {
             _stack = [_buildPlaceholder(context, snapshot)];
           }
           if (snapshot.data == MXVideoUIState.loading) {
             _stack.clear();
+
             _stack.add(_buildPlaceholder(context, snapshot));
             _stack.add(_buildActivityIndicator());
           }
@@ -169,27 +185,29 @@ class _MXVideoAsyncFutureLoaderState
             }
             _stack.add(_buildDone(snapshot));
           }
-          if(snapshot.data == MXVideoUIState.startBuffering){
+          if (snapshot.data == MXVideoUIState.startBuffering) {
+            Widget? buffering = widget.bufferedBuilder?.call(context);
 
-             Widget? buffering = widget.bufferedBuilder?.call(context);
-
-            if(buffering != null &&  _contain(runtimeType: MXInnerBuffer) == false){
-
+            if (buffering != null &&
+                _contain(runtimeType: MXInnerBuffer) == false) {
               _stack.add(buffering);
-
             }
           }
-          if(snapshot.data == MXVideoUIState.endBuffering){
+          if (snapshot.data == MXVideoUIState.endBuffering) {
+            _stack
+                .removeWhere((element) => element.runtimeType == MXInnerBuffer);
 
-            _stack.removeWhere((element) => element.runtimeType == MXInnerBuffer);
             /// 此时如果视频播放器不存在 stack中 就需要添加视频播放的widget
-            if(!_contain(runtimeType: MXInnerSuccess)){
+            if (!_contain(runtimeType: MXInnerSuccess) && _initialized == true) {
+
               _stack.add(_buildDone(snapshot));
             }
+
           }
 
-
-          MXLogger.info("MXVideoUIState:${snapshot.data}, stack:${_stack.toString()}");
+          MXLogger.info(
+              "MXVideoUIState:${snapshot.data}, stack:${_stack.toString()}");
+          widget.stackCacheCallback?.call(_stack);
           return Stack(
             alignment: Alignment.center,
             children: _stack,
@@ -197,17 +215,18 @@ class _MXVideoAsyncFutureLoaderState
         });
   }
 
-  bool _contain({required Type runtimeType}){
+  bool _contain({required Type runtimeType}) {
     for (var element in _stack) {
-      if(element.runtimeType == runtimeType) return true;
+      if (element.runtimeType == runtimeType) return true;
     }
     return false;
   }
+
   Widget _buildPlaceholder(
       BuildContext context, AsyncSnapshot<MXVideoUIState?> snapshot) {
     Widget? _placeholderWidget = widget.placeholderBuilder?.call(context);
-    _cachePlaceholder = _placeholderWidget;
-    return _placeholderWidget ?? const SizedBox();
+    _cachePlaceholder = _placeholderWidget ?? const SizedBox();
+    return _cachePlaceholder!;
   }
 
   Widget _buildDone(AsyncSnapshot<MXVideoUIState?> snapshot) {

@@ -4,10 +4,13 @@ import 'package:example/convenient_video_page.dart';
 import 'package:flutter/material.dart';
 
 import 'basic_video_page.dart';
+import 'package:super_player/super_player.dart';
 
-
-void main() {
-  runApp(const MyApp());
+void main() async{
+  WidgetsFlutterBinding.ensureInitialized();
+ await SuperPlayerPlugin.setGlobalLicense("https://license.vod2.myqcloud.com/license/v2/1254467417_1/v_cube.license", "660cc4a42331e86c015db1a10080a33b");
+  SuperPlayerPlugin.setLogLevel(6);
+ runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {

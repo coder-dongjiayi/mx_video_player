@@ -3,12 +3,12 @@
 author: 董家祎
 * */
 import 'dart:async';
-import 'dart:io';
 
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:mx_video_player/mx_video_player.dart';
 import 'package:mx_video_player/src/video_player/mx_logger.dart';
-import 'package:video_player/video_player.dart';
+import 'package:super_player/super_player.dart';
 import 'package:mx_video_player/src/api/video_player_state.dart';
 
 class MXVideoPlayerController {
@@ -23,7 +23,7 @@ class MXVideoPlayerController {
   Stream<Duration> get onPositionStream => _positionController.stream;
 
   /// Stream of change on  video_player
-  Stream<VideoPlayerValue> get onValueStream => _valueController.stream;
+  // Stream<VideoPlayerValue> get onValueStream => _valueController.stream;
 
   /// Stream of change on video progress
   Stream<double> get onProgressStream => _progressController.stream;
@@ -49,20 +49,18 @@ class MXVideoPlayerController {
   bool get isBuffering => _isBuffering ?? false;
 
   /// The video aspect
-  double get aspectRatio => _videoPlayerController == null
-      ? 1.0
-      : _videoPlayerController!.value.aspectRatio;
+  double get aspectRatio => _size.width / _size.height;
 
+  Size _size = Size.zero;
   ///The video size, default value is Size.zero。
-  Size get size => _videoPlayerController == null
-      ? Size.zero
-      : _videoPlayerController!.value.size;
-
+  Size get size => _size;
   /// Android: exoplayer, ios:AVFoundation
-  VideoPlayerController? get videoPlayerController => _videoPlayerController;
+  TXVodPlayerController? get videoPlayerController => _videoPlayerController;
 
+  bool _isPlaying = false;
+  bool  get  isPlaying =>  _isPlaying;
   /// Get media Volume
-  double  get volume => _videoPlayerController?.value.volume ?? 0;
+  double  get volume => 1.0;
 
   /// Sets whether or not the video should loop after playing once.
   bool isLooping = false;
@@ -83,8 +81,8 @@ class MXVideoPlayerController {
   ///  Only set for [BlingVideoPlayer.assets] videos. The package that the asset was loaded from.
   String? package;
 
-  final StreamController<VideoPlayerValue> _valueController =
-      StreamController.broadcast();
+  // final StreamController<VideoPlayerValue> _valueController =
+  //     StreamController.broadcast();
 
   final StreamController<double> _progressController =
       StreamController.broadcast();
@@ -101,7 +99,16 @@ class MXVideoPlayerController {
   final StreamController<bool> _isBufferingController =
       StreamController.broadcast();
 
+
+  List<Widget> _playerStack = [];
+
+  List<Widget> get playerStack => _playerStack;
+
+  Completer<void>? _completer;
+
   bool _isRelease = false;
+  /// 播放器是否已经初始化完成了
+  bool _initialized = false;
 
   VoidCallback? _listener;
 
@@ -109,7 +116,6 @@ class MXVideoPlayerController {
 
   Duration? _position;
 
-  Duration? _buffered;
 
   bool? _isBuffering;
 
@@ -117,21 +123,27 @@ class MXVideoPlayerController {
 
   MXVideoPlayerState _state = MXVideoPlayerState.idle;
 
-  VideoPlayerController? _videoPlayerController;
+  TXVodPlayerController? _videoPlayerController;
 
   /// assets://xxxxx
   /// file://xxxxxx
   /// http、https ://xxxx
   MXVideoPlayerController(
       {String? dataSource,
+       bool? onlyAudio, /// 是否为纯音频模式 默认NO
       this.package,
       bool isLooping = false,
-      bool autoPlay = true,
+      this.autoPlay = true,
       bool? mixWithOthers,
-      Future<ClosedCaptionFile>? closedCaptionFile,
       Widget? prepare,
       Alignment? alignment,
       BoxFit? fit}) {
+    LogUtils.logOpen = false;
+    SuperPlayerPlugin.setConsoleEnabled(false);
+    _videoPlayerController = TXVodPlayerController();
+     _initialize(onlyAudio: onlyAudio);
+    _videoPlayerController!.setConfig(FTXVodPlayConfig());
+    _addListener();
     if (dataSource != null) {
       setDataSource(
         dataSource,
@@ -139,7 +151,7 @@ class MXVideoPlayerController {
         isLooping: isLooping,
         autoPlay: autoPlay,
         mixWithOthers: mixWithOthers,
-        closedCaptionFile: closedCaptionFile,
+
         prepare: prepare,
         alignment: alignment,
         fit: fit,
@@ -151,7 +163,7 @@ class MXVideoPlayerController {
       {bool isLooping = false,
       bool autoPlay = true,
       bool? mixWithOthers,
-      Future<ClosedCaptionFile>? closedCaptionFile,
+
       Widget? prepare,
       Alignment? alignment,
       BoxFit? fit}) {
@@ -159,7 +171,7 @@ class MXVideoPlayerController {
         isLooping: isLooping,
         autoPlay: autoPlay,
         mixWithOthers: mixWithOthers,
-        closedCaptionFile: closedCaptionFile,
+
         prepare: prepare,
         alignment: alignment,
         fit: fit);
@@ -170,7 +182,7 @@ class MXVideoPlayerController {
       bool isLooping = false,
       bool autoPlay = true,
       bool? mixWithOthers,
-      Future<ClosedCaptionFile>? closedCaptionFile,
+
       Widget? prepare,
       Alignment? alignment,
       BoxFit? fit}) {
@@ -179,7 +191,7 @@ class MXVideoPlayerController {
         isLooping: isLooping,
         autoPlay: autoPlay,
         mixWithOthers: mixWithOthers,
-        closedCaptionFile: closedCaptionFile,
+
         prepare: prepare,
         alignment: alignment,
         fit: fit);
@@ -190,7 +202,7 @@ class MXVideoPlayerController {
       bool isLooping = false,
       bool autoPlay = true,
       bool? mixWithOthers,
-      Future<ClosedCaptionFile>? closedCaptionFile,
+
       Widget? prepare,
       Alignment? alignment,
       BoxFit? fit}) async {
@@ -206,15 +218,17 @@ class MXVideoPlayerController {
     this.alignment = alignment;
     this.fit = fit;
     this.prepare = prepare;
+    _completer = Completer();
 
-    await _innerReset();
+   if(_initialized == false){
+   await  Future.delayed(Duration.zero,(){
+       _updatePlayerState(MXVideoPlayerState.prepareInitialized);
+     });
+     
+   }
 
-    _updatePlayerState(MXVideoPlayerState.prepareInitialized);
 
-    _videoPlayerController = _initVideoController(
-        dataSource, mixWithOthers, package, closedCaptionFile);
-
-   await _initialize();
+   await _videoPlayerController!.startPlay(dataSource);
 
     MXLogger.info("parameters:\n"
         "[package = $package] \n"
@@ -222,121 +236,140 @@ class MXVideoPlayerController {
         "[autoPlay = $autoPlay] \n"
         "[alignment = $alignment] \n"
         "[fit = $fit]");
+    return _completer?.future;
   }
 
   void _addListener() {
-    ///Get the total video duration when the video is successfully played
-    _duration = _videoPlayerController!.value.duration ;
-
-    _listener = () async {
-      if (_videoPlayerController == null || _isRelease == true) return;
-
-      _valueController.add(_videoPlayerController!.value);
-
-      if (_videoPlayerController!.value.hasError == true) {
-        String? errorDescription =
-            _videoPlayerController!.value.errorDescription;
-
-        MXLogger.error("_videoPlayerController error:$errorDescription");
-
-        _updatePlayerState(MXVideoPlayerState.error);
-
-        throw FlutterError(errorDescription ?? "error is null");
+    _videoPlayerController?.onPlayerState.listen((event) {
+      switch(event){
+        case TXPlayerState.playing:
+          _isPlaying = true;
+          _updatePlayerState(MXVideoPlayerState.playing);
+          break;
+        case TXPlayerState.paused:
+          _isPlaying = false;
+          _updatePlayerState(MXVideoPlayerState.paused);
+          break;
+        case TXPlayerState.stopped:
+          _updatePlayerState(MXVideoPlayerState.stop);
+          break;
+        case   TXPlayerState.buffering:
+          _updatePlayerState(MXVideoPlayerState.buffering);
+          break;
+        case TXPlayerState.failed:
+          _updatePlayerState(MXVideoPlayerState.error);
+          break;
+        case TXPlayerState.disposed:
+          _updatePlayerState(MXVideoPlayerState.idle);
+          break;
       }
-      if (_videoPlayerController!.value.isInitialized == false) {
-        return;
+    });
+
+    _videoPlayerController?.onPlayerEventBroadcast.listen((event) async{
+      int eventCode = event['event'];
+      if(eventCode < 0){
+            MXLogger.error("_videoPlayerController error:$eventCode");
+
+            _updatePlayerState(MXVideoPlayerState.error);
+
+            return;
       }
 
 
-      _position = _videoPlayerController!.value.position;
+      switch (eventCode){
+        case  TXVodPlayEvent.PLAY_EVT_PLAY_PROGRESS:
+          {
+
+            dynamic progress = Platform.isIOS ?  (event[TXVodPlayEvent.EVT_PLAY_PROGRESS]) * 1000 : event[TXVodPlayEvent.EVT_PLAY_PROGRESS_MS];
+            dynamic duration = Platform.isIOS ?  (event[TXVodPlayEvent.EVT_PLAY_DURATION]) * 1000 : event[TXVodPlayEvent.EVT_PLAY_DURATION_MS];
 
 
-      if (_videoPlayerController!.dataSourceType == DataSourceType.network) {
-        int maxBuffering = 0;
-        for (var element in _videoPlayerController!.value.buffered) {
-          final int end = element.end.inMilliseconds;
-          if (end > maxBuffering) {
-            maxBuffering = end;
+            if (null != progress && duration != null && _state != MXVideoPlayerState.completed && _state!=MXVideoPlayerState.idle) {
+              _duration =   Duration(microseconds: (duration*1000).toInt());
+               var position = progress > duration ? duration : progress;
+              _position = Duration(milliseconds: (position).toInt());
+
+              var _progress = _position!.inMilliseconds/_duration!.inMilliseconds;
+
+              this._progress  = _progress;
+
+              _positionController.sink.add(_position!);
+               _progressController.sink.add(_progress);
+              double bufferDuration =  await _videoPlayerController?.getPlayableDuration() ?? 0;
+              Duration buffer =  Duration(milliseconds: (bufferDuration*1000).toInt());
+
+              _bufferedController.sink.add(buffer);
+            }
+
           }
-     
-        }
-        _buffered = Duration(milliseconds: maxBuffering);
+          break;
+        case  TXVodPlayEvent.PLAY_EVT_PLAY_BEGIN:
+          {
 
-        _bufferedController.sink.add(_buffered ?? Duration.zero);
-        bool isBuffering =  (_buffered ?? Duration.zero) < _position! ? true : false;
-       
-        if(Platform.isAndroid){
-           isBuffering = _videoPlayerController!.value.isBuffering;
-         }
+           int width =  await _videoPlayerController?.getWidth() ?? 0;
+           int height =  await _videoPlayerController?.getHeight() ?? 0;
 
-        if (isBuffering != _isBuffering && _state != MXVideoPlayerState.completed) {
-          _isBuffering = isBuffering;
-       
-          _isBufferingController.sink.add(isBuffering);
-        }
+           _size = Size(width.toDouble(), height.toDouble());
+           Future.delayed(Duration.zero,(){
+             MXLogger.info("videoWidth:$width videoHeight = $height");
+             _updatePlayerState(MXVideoPlayerState.initialized);
+           });
 
-        MXLogger.detail(
-            "isBuffering:$_isBuffering ,buffered:$_buffered,_position:$_position");
+           _initialized = true;
+           _completer?.complete();
+           _completer = null;
+          }
+          break;
+        case TXVodPlayEvent.PLAY_EVT_PLAY_LOADING:
+          {
+            _isBufferingController.add(true);
+
+          }
+          break;
+        case  TXVodPlayEvent.PLAY_EVT_VOD_LOADING_END:
+          {
+            _isBufferingController.add(false);
+
+          }
+          break;
+        case TXVodPlayEvent.PLAY_EVT_PLAY_END:
+          {
+            _isPlaying = false;
+            /// 修复播放器返回时间不准确的问题
+            if(_duration != _position){
+              _position = _duration;
+              _positionController.sink.add(_position!);
+              _progressController.sink.add(1.0);
+
+            }
+            _updatePlayerState(MXVideoPlayerState.completed);
+          }
+          break;
       }
+    });
 
-
-
-      double progress = _position!.inMilliseconds / _duration!.inMilliseconds;
-      progress = progress >= 1.0 ? 1.0 : progress;
-
-      bool isCompleted = _isCompleted(progress);
-
-
-      _progress = progress;
-     if(_state != MXVideoPlayerState.paused){
-       _positionController.sink.add(_position!);
-       _progressController.sink.add(progress);
-     }
-
-
-      MXLogger.detail("progress:"
-          "$_progress position:${_position!},"
-          "duration:${_duration!}");
-
-      if (isCompleted && _state != MXVideoPlayerState.completed) {
-        _updatePlayerState(MXVideoPlayerState.completed);
-      }
-    };
-    _videoPlayerController!.addListener(_listener!);
   }
 
-  bool _isCompleted(double progress) {
-    /// 循环播放的情况下 没有播放完成的状态
-    if (_state == MXVideoPlayerState.completed || isLooping == true) {
-      return false;
-    }
 
-
-    return _position!.inMicroseconds == _duration!.inMicroseconds;
-  }
-
-  Future<bool> _initialize() async {
+  Future<bool> _initialize({bool? onlyAudio}) async {
     if (_videoPlayerController == null) {
       return false;
     }
-    bool _result = await _innerInitialize();
+    bool _result = await _innerInitialize(onlyAudio: onlyAudio);
 
-    if (autoPlay == true && _result == true) {
+    if ( _result == true) {
+      await _videoPlayerController?.setAutoPlay(isAutoPlay: autoPlay);
       MXLogger.info("autoPlay = true Start auto play");
-
-      await  play();
     }
-    await _videoPlayerController?.setLooping(isLooping);
+
     return _result;
   }
 
-  Future<bool> _innerInitialize() async {
+  Future<bool> _innerInitialize({bool? onlyAudio}) async {
     try {
-      await _videoPlayerController?.initialize();
+      await _videoPlayerController?.initialize(onlyAudio: onlyAudio);
 
-      _updatePlayerState(MXVideoPlayerState.initialized);
-      MXLogger.info(
-          "The player is successfully initialized. videoSize = $size");
+
       return true;
     } catch (error) {
       MXLogger.error("Failed to initialize the player:${error.toString()}");
@@ -357,8 +390,8 @@ class MXVideoPlayerController {
 
   Future<void> setSpeed(double speed) async {
     MXLogger.info("player setting speed is  $speed");
+    await _videoPlayerController?.setRate(speed);
 
-    await _videoPlayerController?.setPlaybackSpeed(speed);
   }
 
   Future<void> setVolume(double volume) async {
@@ -371,12 +404,12 @@ class MXVideoPlayerController {
       return Future.value();
     }
     MXLogger.info("setting volume is $volume");
-    return _videoPlayerController?.setVolume(volume);
+    return _videoPlayerController?.setAudioPlayoutVolume((volume*100).toInt());
   }
 
   Future<void> play() async {
     if (_verify(MXVideoPlayerState.playing) == false) {
-      MXLogger.info("play()invalid,BlVideoPlayerState is$_state");
+      MXLogger.info("play()invalid,MXVideoPlayerState is$_state");
       return Future.value();
     }
     return _innerPlay();
@@ -384,7 +417,7 @@ class MXVideoPlayerController {
 
   Future<void> pause() async {
     if (_verify(MXVideoPlayerState.paused) == false) {
-      MXLogger.info("pause() invalid,current BlVideoPlayerState is$_state");
+      MXLogger.info("pause() invalid,current MXVideoPlayerState is$_state");
       return Future.value();
     }
     return _innerPause();
@@ -392,7 +425,7 @@ class MXVideoPlayerController {
 
   Future<void> reset() async {
     if (_verify(MXVideoPlayerState.idle) == false) {
-      MXLogger.info("reset() invalid ,current BlVideoPlayerState is: $_state");
+      MXLogger.info("reset() invalid ,current MXVideoPlayerState is: $_state");
       return Future.value();
     }
     await _innerReset();
@@ -400,7 +433,7 @@ class MXVideoPlayerController {
 
   Future<void> stop() async {
     if (_verify(MXVideoPlayerState.stop) == false) {
-      MXLogger.info("stop() invalid ,current BlVideoPlayerState is:$_state");
+      MXLogger.info("stop() invalid ,current MXVideoPlayerState is:$_state");
       return Future.value();
     }
     return _innerStop();
@@ -409,23 +442,19 @@ class MXVideoPlayerController {
   Future<void> seekTo(Duration position) async {
     if (_verify(null) == false) {
       MXLogger.info(
-          "seekTo(Duration position) invalid ,current BlVideoPlayerState is:$_state");
+          "seekTo(Duration position) invalid ,current MXVideoPlayerState is:$_state");
       return Future.value();
     }
-    if(_state != MXVideoPlayerState.paused){
-      await _videoPlayerController?.pause();
-    }
-    await _videoPlayerController?.seekTo(position);
 
-    if(_state != MXVideoPlayerState.paused){
-      await _videoPlayerController?.play();
-    }
+    await _videoPlayerController?.seek(position.inSeconds.toDouble());
+
+
   }
 
   Future<void> setProgress(double progress) async {
     if (_verify(null) == false) {
       MXLogger.info(
-          "setProgress(double progress) invalid ,current BlVideoPlayerState is:$_state");
+          "setProgress(double progress) invalid ,current MXVideoPlayerState is:$_state");
       return Future.value();
     }
 
@@ -439,17 +468,13 @@ class MXVideoPlayerController {
   }
 
   Future<void> _innerStop() async {
-    if (_state == MXVideoPlayerState.playing) {
-      _videoPlayerController?.pause();
-    }
+    _videoPlayerController?.stop();
     _updatePlayerState(MXVideoPlayerState.stop);
   }
 
   Future<void> _innerPlay() async {
-    if (_listener == null) {
-      _addListener();
-    }
-    await _videoPlayerController?.play();
+   _isPlaying = true;
+    await _videoPlayerController?.resume();
     _updatePlayerState(MXVideoPlayerState.playing);
   }
 
@@ -458,10 +483,14 @@ class MXVideoPlayerController {
     _updatePlayerState(MXVideoPlayerState.paused);
   }
 
+  void updatePlayerStack(List<Widget> stack){
+    _playerStack = stack;
+  }
   void _updatePlayerState(MXVideoPlayerState state) {
     if (_videoPlayerController != null ||
         state == MXVideoPlayerState.prepareInitialized) {
       _state = state;
+
       if (_playerStateController.isClosed == false) {
         _playerStateController.sink.add(state);
       }
@@ -469,46 +498,13 @@ class MXVideoPlayerController {
     }
   }
 
-  VideoPlayerController? _initVideoController(
-      String dataSource,
-      bool? mixWithOthers,
-      String? package,
-      Future<ClosedCaptionFile>? closedCaptionFile) {
-    VideoPlayerController? _controller;
 
-    VideoPlayerOptions? _options =
-        VideoPlayerOptions(mixWithOthers: mixWithOthers ?? true);
-
-    String prefix = dataSource.split("://").first;
-
-    if (prefix == "http" || prefix == "https") {
-      _controller = VideoPlayerController.network(dataSource,
-          videoPlayerOptions: _options, closedCaptionFile: closedCaptionFile);
-
-      MXLogger.info("remote path :$dataSource");
-    } else if (prefix == "assets") {
-      String assets = dataSource.replaceRange(0, 9, "");
-      _controller = VideoPlayerController.asset(assets,
-          videoPlayerOptions: _options,
-          package: package,
-          closedCaptionFile: closedCaptionFile);
-      MXLogger.info("assets path:$dataSource");
-    } else if (prefix == "file") {
-      String path = dataSource.replaceRange(0, 6, "");
-
-      _controller = VideoPlayerController.file(File(path),
-          videoPlayerOptions: _options, closedCaptionFile: closedCaptionFile);
-      MXLogger.info("location path:$dataSource");
-    }
-
-    return _controller;
-  }
 
   bool _verify(MXVideoPlayerState? state) {
-    if (_videoPlayerController?.value.isInitialized == false) {
-      MXLogger.info("videoPlayer is not initialized yet ");
-      return false;
-    }
+    // if (_videoPlayerController?.value.isInitialized == false) {
+    //   MXLogger.info("videoPlayer is not initialized yet ");
+    //   return false;
+    // }
 
     if (_state == MXVideoPlayerState.stop && state != MXVideoPlayerState.idle) {
       return false;
@@ -526,7 +522,7 @@ class MXVideoPlayerController {
   Future<void> _innerReset() async {
     _updatePlayerState(MXVideoPlayerState.idle);
 
-    await _videoPlayerController?.dispose();
+    _videoPlayerController?.dispose();
     if (_listener != null) {
       _videoPlayerController?.removeListener(_listener!);
     }
@@ -543,9 +539,7 @@ class MXVideoPlayerController {
     if (_playerStateController.isClosed == false) {
       _playerStateController.close();
     }
-    if (_valueController.isClosed == false) {
-      _valueController.close();
-    }
+
     if (_progressController.isClosed == false) {
       _progressController.close();
     }
